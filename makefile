@@ -5,17 +5,17 @@
 #---- BASIC -----------------------------------------------------------------------------------------------------------#
 
 LIBRARY        := microfb
-LIBS           := -lmicrofb -lgbm -lEGL -lGL -lGLEW
+LIBS           := -lmicrofb -lmicrocompute -lgbm -lEGL -lGL -lGLEW -lglfw
 FLAGS          := -Wall -Wextra -Wno-missing-braces -Wno-unused-parameter
 DEFS           := 
 
 #---- PROJECT STRUCTURE -----------------------------------------------------------------------------------------------#
 
 INCLUDE_FOLDER := include
-LIB_FOLDER     := out
+LIB_FOLDER     := lib
 BUILD_FOLDER   := build
 SRC_FOLDER     := src
-OUT_FOLDER     := out
+OUT_FOLDER     := tmp
 EXAMPLE_FOLDER := example
 
 #======================================================================================================================#
@@ -23,6 +23,7 @@ EXAMPLE_FOLDER := example
 CC                := gcc $(FLAGS) $(DEFS) -isystem $(INCLUDE_FOLDER) -I $(SRC_FOLDER)
 AR                := ar rcs
 RM                := rm -rf
+CD                := cd
 CP                := cp
 MKDIR             := mkdir -p
 SRC_FOLDERS       := $(shell find $(SRC_FOLDER)/ -type d)
@@ -31,13 +32,25 @@ C_FILES           := $(shell find $(SRC_FOLDER)/ -type f -name "*.c")
 C_OBJECTS         := $(subst $(SRC_FOLDER)/,$(BUILD_FOLDER)/,$(subst .c,.o,$(C_FILES)))
 EXAMPLE_C_FILES   := $(shell find $(EXAMPLE_FOLDER)/ -type f -name "*.c")
 EXAMPLES          := $(subst $(EXAMPLE_FOLDER)/,$(OUT_FOLDER)/,$(subst .c,,$(EXAMPLE_C_FILES)))
-STATIC_LIB        := $(OUT_FOLDER)/lib$(LIBRARY).a
+STATIC_LIB        := $(LIB_FOLDER)/lib$(LIBRARY).a
 
-.PHONY: all doc clean
+.PHONY: all library example dependency doc clean
 
-all: $(EXAMPLES) $(STATIC_LIB) doc
+all: library example doc
 
-lib: $(STATIC_LIB)
+library: $(STATIC_LIB)
+
+example: $(EXAMPLES)
+
+dependency: $(INCLUDE_FOLDER) $(LIB_FOLDER)
+	$(CD) microcompute; \
+	make clean; \
+	make library
+	$(CP) microcompute/include/microcompute.h $(INCLUDE_FOLDER)/microcompute.h
+	$(CP) microcompute/lib/libmicrocompute.a $(LIB_FOLDER)/libmicrocompute.a
+
+doc:
+	python3 microdoc/doc_generator.py $(SRC_FOLDER)/$(LIBRARY).h doc.md
 
 $(BUILD_FOLDER):
 	$(MKDIR) $(BUILD_FOLDER)
@@ -45,21 +58,24 @@ $(BUILD_FOLDER):
 $(OUT_FOLDER):
 	$(MKDIR) $(OUT_FOLDER)
 
+$(INCLUDE_FOLDER):
+	$(MKDIR) $(INCLUDE_FOLDER)
+
+$(LIB_FOLDER):
+	$(MKDIR) $(LIB_FOLDER)
+
 $(BUILD_SUB_FOLDERS): $(BUILD_FOLDER)
 	$(MKDIR) $(BUILD_SUB_FOLDERS)
 
 $(C_OBJECTS): $(BUILD_SUB_FOLDERS) $(C_FILES)
 	$(CC) -c $(subst $(BUILD_FOLDER)/,$(SRC_FOLDER)/,$(subst .o,.c,$@)) -o $@
 
-$(STATIC_LIB): $(OUT_FOLDER) $(C_OBJECTS)
+$(STATIC_LIB): dependency $(INCLUDE_FOLDER) $(LIB_FOLDER) $(C_OBJECTS)
 	$(AR) $(STATIC_LIB) $(C_OBJECTS)
-	$(CP) $(SRC_FOLDER)/$(LIBRARY).h $(OUT_FOLDER)/$(LIBRARY).h
+	$(CP) $(SRC_FOLDER)/$(LIBRARY).h $(INCLUDE_FOLDER)/$(LIBRARY).h
 
-$(EXAMPLES): $(STATIC_LIB)
+$(EXAMPLES): $(OUT_FOLDER) $(STATIC_LIB)
 	$(CC) -g $(subst $(OUT_FOLDER)/,$(EXAMPLE_FOLDER)/,$@).c -o $@ -L$(LIB_FOLDER) $(LIBS)
 
-doc:
-	python3 microdoc/doc_generator.py $(SRC_FOLDER)/$(LIBRARY).h doc.md
-
 clean:
-	$(RM) $(BUILD_FOLDER) $(OUT_FOLDER)
+	$(RM) $(BUILD_FOLDER) $(INCLUDE_FOLDER) $(LIB_FOLDER) $(OUT_FOLDER)
