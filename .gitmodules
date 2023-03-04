@@ -1,6 +1,6 @@
-[submodule "microcompute"]
-	path = microcompute
+[submodule "submodules/microcompute"]
+	path = submodules/microcompute
 	url = git@github.com:kal39/microcompute.git
-[submodule "microdoc"]
-	path = microdoc
+[submodule "submodules/microdoc"]
+	path = submodules/microdoc
 	url = git@github.com:kal39/microdoc.git

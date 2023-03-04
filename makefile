@@ -43,14 +43,14 @@ library: $(STATIC_LIB)
 example: $(EXAMPLES)
 
 dependency: $(INCLUDE_FOLDER) $(LIB_FOLDER)
-	$(CD) microcompute; \
+	$(CD) submodules/microcompute; \
 	make clean; \
 	make library
-	$(CP) microcompute/include/microcompute.h $(INCLUDE_FOLDER)/microcompute.h
-	$(CP) microcompute/lib/libmicrocompute.a $(LIB_FOLDER)/libmicrocompute.a
+	$(CP) submodules/microcompute/include/microcompute.h $(INCLUDE_FOLDER)/microcompute.h
+	$(CP) submodules/microcompute/lib/libmicrocompute.a $(LIB_FOLDER)/libmicrocompute.a
 
 doc:
-	python3 microdoc/doc_generator.py $(SRC_FOLDER)/$(LIBRARY).h doc.md
+	python3 submodules/microdoc/doc_generator.py $(SRC_FOLDER)/$(LIBRARY).h doc.md
 
 $(BUILD_FOLDER):
 	$(MKDIR) $(BUILD_FOLDER)
