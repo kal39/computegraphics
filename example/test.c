@@ -1,31 +1,31 @@
 #include <microfb.h>
 #include <stdio.h>
 
-// static char* renderProgSrc = //
-//     "#version 460\n"
-//     "layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;\n"
-//     "layout(std430, binding = 0) buffer buff1 {\n"
-//     "    vec3 floatData[];\n"
-//     "};\n"
-//     "uniform float maxIter;\n"
-//     "uniform vec2 center;\n"
-//     "uniform vec2 zoom;\n"
-//     "void main(void) {\n"
-//     "    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);\n"
-//     "    ivec2 size = ivec2(gl_NumWorkGroups.xy);\n"
-//     "    vec2 screenPos = vec2(pos) / vec2(size) - 0.5;\n"
-//     "    vec2 z0 = center + screenPos / zoom;\n"
-//     "    vec2 z = vec2(0.0, 0.0);\n"
-//     "    vec2 z2 = vec2(0.0, 0.0);\n"
-//     "    int i = 0;\n"
-//     "    for(; i < maxIter && z2.x + z2.y <= 4; i++) {\n"
-//     "        z = vec2(z2.x - z2.y + z0.x, 2 * z.x * z.y + z0.y);\n"
-//     "        z2 = vec2(z.x * z.x, z.y * z.y);\n"
-//     "    }\n"
-//     "    float color = float(i) / float(maxIter);\n"
-//     "    floatData[(pos.y * size.x + pos.x)] = vec3(color, \n"
-//     "0.5 * color, 0.5 * color);\n"
-//     "}\n";
+static char* renderProgSrc = //
+    "#version 460\n"
+    "layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;\n"
+    "layout(std430, binding = 0) buffer buffer1 {\n"
+    "    vec3 floatData[];\n"
+    "};\n"
+    "uniform float maxIter;\n"
+    "uniform vec2 center;\n"
+    "uniform vec2 zoom;\n"
+    "void main(void) {\n"
+    "    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);\n"
+    "    ivec2 size = ivec2(gl_NumWorkGroups.xy);\n"
+    "    vec2 screenPos = vec2(pos) / vec2(size) - 0.5;\n"
+    "    vec2 z0 = center + screenPos / zoom;\n"
+    "    vec2 z = vec2(0.0, 0.0);\n"
+    "    vec2 z2 = vec2(0.0, 0.0);\n"
+    "    int i = 0;\n"
+    "    for(; i < maxIter && z2.x + z2.y <= 4; i++) {\n"
+    "        z = vec2(z2.x - z2.y + z0.x, 2 * z.x * z.y + z0.y);\n"
+    "        z2 = vec2(z.x * z.x, z.y * z.y);\n"
+    "    }\n"
+    "    float color = float(i) / float(maxIter);\n"
+    "    floatData[(pos.y * size.x + pos.x)] = vec3(color, \n"
+    "0.5 * color, 0.5 * color);\n"
+    "}\n";
 
 int main(void) {
     mc_Result res;
@@ -44,17 +44,14 @@ int main(void) {
     }
 
     mc_Program* renderProg
-        = mc_program_create_from_file("example/test.glsl", maxErrLen, error);
-
-    // mc_Program* renderProg
-    //     = mc_program_create_from_string(renderProgSrc, maxErrLen, error);
+        = mc_program_create_from_string(renderProgSrc, maxErrLen, error);
     if (renderProg == NULL) {
         printf("error: %s\n", error);
         return -1;
     }
 
-    mc_uvec2 bufferSize = mf_get_pixel_buffer_size();
-    mc_Buffer* bufferRef = mf_get_pixel_buffer_ref();
+    mc_uvec2 bufferSize = mf_get_buffer_size();
+    mc_Buffer* bufferRef = mf_get_buffer_ref();
 
     while (!mf_window_should_close()) {
         double dt = mf_get_dt();
@@ -70,8 +67,6 @@ int main(void) {
             1,
             (mc_Buffer*[]){bufferRef}
         );
-
-        // mf_clear_pixel_buffer((mc_vec3){0, 0.5, 0.5});
 
         mf_step();
     }
