@@ -47,6 +47,7 @@ mc_Result mcv_canvas_clear_tool_clear(
 }
 
 mc_Result mcv_canvas_clear_tool_destroy(mcv_canvasClearTool* clearTool) {
+    ASSERT(clearTool != NULL, "`clearTool` is NULL");
     mc_program_destroy(clearTool->program);
     free(clearTool);
     return OK;

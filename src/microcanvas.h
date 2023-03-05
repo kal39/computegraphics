@@ -29,6 +29,7 @@ typedef struct mcv_Settings {
 } mcv_Settings;
 
 typedef struct mcv_canvasClearTool mcv_canvasClearTool;
+typedef struct mcv_textDrawTool mcv_textDrawTool;
 
 mc_Result mcv_start(mcv_Settings settings);
 
@@ -45,3 +46,29 @@ mc_Result mcv_canvas_clear_tool_clear(
 );
 
 mc_Result mcv_canvas_clear_tool_destroy(mcv_canvasClearTool* clearTool);
+
+mcv_textDrawTool* mcv_text_draw_tool_create();
+
+mc_Result mcv_text_draw_tool_set_scale(
+    mcv_textDrawTool* textTool,
+    uint32_t scale
+);
+
+mc_Result mcv_text_draw_tool_set_spacing(
+    mcv_textDrawTool* textTool,
+    uint32_t spacing
+);
+
+mc_Result mcv_text_draw_tool_set_color(
+    mcv_textDrawTool* textTool,
+    mc_vec4 textColor
+);
+
+mc_Result mcv_text_draw_tool_draw(
+    mcv_textDrawTool* textTool,
+    mcv_Canvas canvas,
+    char* text,
+    mc_uvec2 pos
+);
+
+mc_Result mcv_text_draw_tool_destroy(mcv_textDrawTool* textTool);

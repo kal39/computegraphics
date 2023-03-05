@@ -30,6 +30,7 @@ static char* renderProgSrc = //
 typedef struct State {
     mc_Program* renderProg;
     mcv_canvasClearTool* clearTool;
+    mcv_textDrawTool* textTool;
 } State;
 
 mc_Bool start(mcv_Canvas canvas, State* state) {
@@ -51,12 +52,13 @@ mc_Bool start(mcv_Canvas canvas, State* state) {
         (mc_vec4){0.5, 0.5, 0.0, 1.0}
     );
 
+    state->textTool = mcv_text_draw_tool_create();
+    mcv_text_draw_tool_set_scale(state->textTool, 3);
+
     return MC_TRUE;
 }
 
 mc_Bool frame(mcv_Canvas canvas, float dt, State* state) {
-    printf("fps: %f\n", 1.0 / dt);
-
     mc_program_set_float(state->renderProg, "maxIter", 500);
     mc_program_set_vec2(
         state->renderProg,
@@ -72,6 +74,12 @@ mc_Bool frame(mcv_Canvas canvas, float dt, State* state) {
         (mc_Buffer*[]){canvas.buff}
     );
 
+    char msg[100];
+    sprintf(msg, "%d fps", (int)(1.0 / dt));
+
+    // mcv_canvas_clear_tool_clear(state->clearTool, canvas);
+    mcv_text_draw_tool_draw(state->textTool, canvas, msg, (mc_uvec2){20, 20});
+
     return MC_TRUE;
 }
 
@@ -80,6 +88,7 @@ mc_Bool stop(mcv_Canvas canvas, State* state) {
 
     mc_program_destroy(state->renderProg);
     mcv_canvas_clear_tool_destroy(state->clearTool);
+    mcv_text_draw_tool_destroy(state->textTool);
 
     return MC_TRUE;
 }
@@ -90,7 +99,7 @@ int main(void) {
     mcv_Settings settings = (mcv_Settings){
         .windowTitle = "Mandelbrot Test",
         .windowSize = (mc_uvec2){1000, 800},
-        .canvasSize = (mc_uvec2){800, 600},
+        .canvasSize = (mc_uvec2){1000, 800},
         .callbackArg = &state,
         .start_cb_fn = (mcv_start_stop_callback*)start,
         .frame_cb_fn = (mcv_frame_callback*)frame,

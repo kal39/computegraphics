@@ -27,6 +27,7 @@ static char* fragCode = //
     "uniform uvec2 cvSize;\n"
     "void main() {\n"
     "   vec2 pos = vec2(gl_FragCoord.xy) / vec2(winSize) * vec2(cvSize);\n"
+    "   pos.y = cvSize.y - pos.y;"
     "   outColor = cv[uint(pos.y) * cvSize.x + uint(pos.x)];"
     "}\n";
 
