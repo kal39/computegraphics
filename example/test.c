@@ -54,9 +54,9 @@ mc_Bool start(mcv_Canvas canvas, State* state) {
 
     state->clearTool = mcv_clear_tool_create();
     state->textTool = mcv_text_tool_create();
-    state->cameraPos = (mc_vec2){-0.7615, -0.08459};
+    state->cameraPos = (mc_vec2){-0, -0.8};
     state->cameraPosDelta = (mc_vec2){0, 0};
-    state->cameraZoom = 1000;
+    state->cameraZoom = 3;
     state->cameraZoomDelta = 1;
 
     return MC_TRUE;
@@ -85,7 +85,7 @@ mc_Bool frame(mcv_Canvas canvas, float dt, State* state) {
     sprintf(msg, "fps:  %d", (int)(1.0 / dt));
     mcv_text_tool_draw(state->textTool, canvas, msg, (mc_uvec2){20, 20});
 
-    sprintf(msg, "pos:  %f + %fi", state->cameraPos.x, state->cameraPos.x);
+    sprintf(msg, "pos:  %f + %fi", state->cameraPos.x, state->cameraPos.y);
     mcv_text_tool_draw(state->textTool, canvas, msg, (mc_uvec2){20, 40});
 
     sprintf(msg, "zoom: x%f", state->cameraZoom);
@@ -129,7 +129,7 @@ int main(void) {
     mcv_Settings settings = (mcv_Settings){
         .windowTitle = "Mandelbrot Test",
         .windowSize = (mc_uvec2){1000, 800},
-        .canvasSize = (mc_uvec2){800, 600},
+        .canvasSize = (mc_uvec2){1000, 800},
         .callbackArg = &(State){},
         .start_cb = (mcv_start_stop_cb*)start,
         .frame_cb = (mcv_frame_cb*)frame,
