@@ -61,22 +61,64 @@ static mc_Result check_program(GLuint program, uint32_t maxLen, char* err) {
     return ERROR("program link error");
 }
 
+static mc_Result main_loop(
+    mcv_start_stop_cb start_cb,
+    mcv_frame_cb frame_cb,
+    mcv_start_stop_cb stop_cb,
+    void* arg
+) {
+    double prevTime = glfwGetTime();
+    ASSERT(start_cb == NULL || start_cb(state.canvas, arg), "start_cb failed");
+
+    while (!glfwWindowShouldClose(state.window)) {
+        double currTime = glfwGetTime();
+        double dt = currTime - prevTime;
+        prevTime = currTime;
+
+        if (!frame_cb(state.canvas, dt, arg)) break;
+
+        glClear(GL_COLOR_BUFFER_BIT);
+        glUseProgram(state.renderProg);
+
+        glUniform2ui(
+            glGetUniformLocation(state.renderProg, "winSize"),
+            state.windowSize.x,
+            state.windowSize.y
+        );
+
+        glUniform2ui(
+            glGetUniformLocation(state.renderProg, "cvSize"),
+            state.canvas.size.x,
+            state.canvas.size.y
+        );
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, *(GLuint*)(state.canvas.buff));
+        glBindVertexArray(state.vao);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glfwSwapBuffers(state.window);
+        glfwPollEvents();
+    }
+
+    ASSERT(stop_cb == NULL || stop_cb(state.canvas, arg), "stop_cb failed");
+    return OK;
+}
+
 mc_Result mcv_start(mcv_Settings settings) {
     ASSERT(
         settings.windowTitle != NULL,
-        "settings option `windowTitle` is required"
+        "settings option windowTitle is has not been set"
     );
     ASSERT(
         memcmp(&settings.windowSize, &(mc_uvec2){0, 0}, sizeof(mc_uvec2)),
-        "settings option `windowSize` is required"
+        "settings option windowSize is has not been set"
     );
     ASSERT(
         memcmp(&settings.canvasSize, &(mc_uvec2){0, 0}, sizeof(mc_uvec2)),
-        "settings option `canvasSize` is required"
+        "settings option canvasSize is has not been set"
     );
     ASSERT(
-        settings.frame_cb_fn != NULL,
-        "settings option `frame_cb_fn` is required"
+        settings.frame_cb != NULL,
+        "settings option frame_cb is has not been set"
     );
 
     mc_Result res;
@@ -94,8 +136,9 @@ mc_Result mcv_start(mcv_Settings settings) {
         NULL
     );
     glfwMakeContextCurrent(state.window);
-    glewInit();
     glfwSwapInterval(0);
+
+    glewInit();
 
     GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertShader, 1, (const char* const*)&vertCode, NULL);
@@ -140,51 +183,13 @@ mc_Result mcv_start(mcv_Settings settings) {
         return res;
     }
 
-    double prevTime = glfwGetTime();
-
-    if (settings.start_cb_fn != NULL
-        && !settings.start_cb_fn(state.canvas, settings.callbackArg)) {
-        glfwTerminate();
-        return ERROR("`start_cb_fn` returned MC_FALSE");
-    }
-
-    while (!glfwWindowShouldClose(state.window)) {
-        double currTime = glfwGetTime();
-        double dt = currTime - prevTime;
-        prevTime = currTime;
-
-        if (!settings.frame_cb_fn(state.canvas, dt, settings.callbackArg)) {
-            break;
-        }
-
-        glClear(GL_COLOR_BUFFER_BIT);
-        glUseProgram(state.renderProg);
-
-        glUniform2ui(
-            glGetUniformLocation(state.renderProg, "winSize"),
-            state.windowSize.x,
-            state.windowSize.y
-        );
-
-        glUniform2ui(
-            glGetUniformLocation(state.renderProg, "cvSize"),
-            state.canvas.size.x,
-            state.canvas.size.y
-        );
-
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, *(GLuint*)(state.canvas.buff));
-        glBindVertexArray(state.vao);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        glfwSwapBuffers(state.window);
-        glfwPollEvents();
-    }
-
-    if (settings.stop_cb_fn != NULL
-        && !settings.stop_cb_fn(state.canvas, settings.callbackArg)) {
-        glfwTerminate();
-        return ERROR("`stop_cb_fn` returned MC_FALSE");
-    }
+    res = main_loop(
+        settings.start_cb,
+        settings.frame_cb,
+        settings.stop_cb,
+        settings.callbackArg
+    );
 
     glfwTerminate();
-    return OK;
+    return res;
 }

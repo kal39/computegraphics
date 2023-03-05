@@ -6,16 +6,16 @@
 
 #include "microcanvas.h"
 
-typedef struct mcv_canvasClearTool {
+typedef struct mcv_clearTool {
     mc_Program* program;
-} mcv_canvasClearTool;
+} mcv_clearTool;
 
-typedef struct mcv_textDrawTool {
+typedef struct mcv_textTool {
     mc_Program* program;
     mc_Buffer* fontData;
     uint32_t scale;
     uint32_t spacing;
-} mcv_textDrawTool;
+} mcv_textTool;
 
 mc_Result gl_check_error(uint32_t line, const char* file, const char* func);
 
