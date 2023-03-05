@@ -2,12 +2,17 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "microfb.h"
 
-#define GL_CHECK_ERROR() gl_check_error(__LINE__, __FILE__, __FUNCTION__)
+typedef struct mf_canvasClearTool {
+    mc_Program* program;
+} mf_canvasClearTool;
 
 mc_Result gl_check_error(uint32_t line, const char* file, const char* func);
+
+#define GL_CHECK_ERROR() gl_check_error(__LINE__, __FILE__, __FUNCTION__)
 
 #define OK                                                                     \
     ((mc_Result){                                                              \

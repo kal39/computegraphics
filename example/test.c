@@ -4,7 +4,7 @@
 static char* renderProgSrc = //
     "#version 460\n"
     "layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;\n"
-    "layout(std430, binding = 0) buffer buffer1 {\n"
+    "layout(std430, binding = 0) buffer ssbo0 {\n"
     "    vec3 floatData[];\n"
     "};\n"
     "uniform float maxIter;\n"
@@ -27,49 +27,81 @@ static char* renderProgSrc = //
     "0.5 * color, 0.5 * color);\n"
     "}\n";
 
-int main(void) {
-    mc_Result res;
+typedef struct State {
+    mc_Program* renderProg;
+    mf_canvasClearTool* clearTool;
+} State;
+
+mc_Bool start(mf_Canvas canvas, State* state) {
+    printf("start\n");
+
     int maxErrLen = 2048;
     char error[maxErrLen];
 
-    res = mf_initialize(
-        (mc_uvec2){1000, 800},
-        (mc_uvec2){800, 600},
-        "microfb Test"
+    state->renderProg
+        = mc_program_create_from_string(renderProgSrc, maxErrLen, error);
+    if (state->renderProg == NULL) {
+        printf("error: %s\n", error);
+        return MC_FALSE;
+    }
+
+    state->clearTool = mf_canvas_clear_tool_create();
+    mf_canvas_clear_tool_set_color(
+        state->clearTool,
+        (mc_vec4){0.5, 0.5, 0.0, 1.0}
     );
 
+    return MC_TRUE;
+}
+
+mc_Bool frame(mf_Canvas canvas, float dt, State* state) {
+    printf("fps: %f\n", 1.0 / dt);
+
+    mc_program_set_float(state->renderProg, "maxIter", 500);
+    mc_program_set_vec2(
+        state->renderProg,
+        "center",
+        (mc_vec2){-0.7615, -0.08459}
+    );
+    mc_program_set_vec2(state->renderProg, "zoom", (mc_vec2){1000, 1000});
+
+    mc_program_dispatch(
+        state->renderProg,
+        (mc_ivec3){canvas.size.x, canvas.size.y, 1},
+        1,
+        (mc_Buffer*[]){canvas.buff}
+    );
+
+    return MC_TRUE;
+}
+
+mc_Bool stop(mf_Canvas canvas, State* state) {
+    printf("stop\n");
+
+    mc_program_destroy(state->renderProg);
+    mf_canvas_clear_tool_destroy(state->clearTool);
+
+    return MC_TRUE;
+}
+
+int main(void) {
+    State state;
+
+    mf_Settings settings = (mf_Settings){
+        .windowTitle = "Mandelbrot Test",
+        .windowSize = (mc_uvec2){1000, 800},
+        .canvasSize = (mc_uvec2){800, 600},
+        .callbackArg = &state,
+        .start_cb_fn = (mf_start_stop_callback*)start,
+        .frame_cb_fn = (mf_frame_callback*)frame,
+        .stop_cb_fn = (mf_start_stop_callback*)stop,
+    };
+
+    mc_Result res = mf_start(settings);
     if (!res.ok) {
         mc_result_pretty_print(res);
-        return -1;
+        return 1;
     }
 
-    mc_Program* renderProg
-        = mc_program_create_from_string(renderProgSrc, maxErrLen, error);
-    if (renderProg == NULL) {
-        printf("error: %s\n", error);
-        return -1;
-    }
-
-    mc_uvec2 bufferSize = mf_get_buffer_size();
-    mc_Buffer* bufferRef = mf_get_buffer_ref();
-
-    while (!mf_window_should_close()) {
-        double dt = mf_get_dt();
-        printf("fps: %f\n", 1.0 / dt);
-
-        mc_program_set_float(renderProg, "maxIter", 500);
-        mc_program_set_vec2(renderProg, "center", (mc_vec2){-0.7615, -0.08459});
-        mc_program_set_vec2(renderProg, "zoom", (mc_vec2){1000, 1000});
-
-        mc_program_dispatch(
-            renderProg,
-            (mc_ivec3){bufferSize.x, bufferSize.y, 1},
-            1,
-            (mc_Buffer*[]){bufferRef}
-        );
-
-        mf_step();
-    }
-
-    mf_terminate();
+    return 0;
 }

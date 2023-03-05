@@ -3,13 +3,9 @@
 struct mf_State {
     mc_uvec2 windowSize;
     GLFWwindow* window;
-    mc_uvec2 buffSize;
-    mc_Buffer* buff;
-    mc_Program* buffClearProg;
+    mf_Canvas canvas;
     GLuint renderProg;
     GLuint vao;
-    double prevTime;
-    double dt;
 };
 
 static struct mf_State state;
@@ -25,26 +21,13 @@ static char* fragCode = //
     "#version 430\n"
     "layout (location = 0) out vec4 outColor;"
     "layout(std430, binding = 0) buffer ssbo0 {\n"
-    "   vec4 buff[];\n"
+    "   vec4 cv[];\n"
     "};\n"
-    "uniform uvec2 windowSize;\n"
-    "uniform uvec2 buffSize;\n"
+    "uniform uvec2 winSize;\n"
+    "uniform uvec2 cvSize;\n"
     "void main() {\n"
-    "   vec2 pos = vec2(gl_FragCoord.xy) / vec2(windowSize) * vec2(buffSize);\n"
-    "   outColor = buff[uint(pos.y) * buffSize.x + uint(pos.x)];"
-    "}\n";
-
-static char* clearCode = //
-    "#version 430\n"
-    "layout(local_size_x = 1, local_size_y = 1) in;\n"
-    "uniform vec4 clearColor;\n"
-    "layout(std430, binding = 0) buffer ssbo0 {\n"
-    "    vec4 buff[];\n"
-    "};\n"
-    "void main() {\n"
-    "   uvec2 pos = gl_GlobalInvocationID.xy;\n"
-    "   uvec2 size = gl_NumWorkGroups.xy;\n"
-    "   buff[pos.y * size.x + pos.x] = clearColor;\n"
+    "   vec2 pos = vec2(gl_FragCoord.xy) / vec2(winSize) * vec2(cvSize);\n"
+    "   outColor = cv[uint(pos.y) * cvSize.x + uint(pos.x)];"
     "}\n";
 
 static mc_Result check_shader(GLuint shader, uint32_t maxLen, char* err) {
@@ -77,20 +60,38 @@ static mc_Result check_program(GLuint program, uint32_t maxLen, char* err) {
     return ERROR("program link error");
 }
 
-mc_Result mf_initialize(
-    mc_uvec2 windowSize,
-    mc_uvec2 bufferSize,
-    const char* windowTitle
-) {
+mc_Result mf_start(mf_Settings settings) {
+    ASSERT(
+        settings.windowTitle != NULL,
+        "settings option `windowTitle` is required"
+    );
+    ASSERT(
+        memcmp(&settings.windowSize, &(mc_uvec2){0, 0}, sizeof(mc_uvec2)),
+        "settings option `windowSize` is required"
+    );
+    ASSERT(
+        memcmp(&settings.canvasSize, &(mc_uvec2){0, 0}, sizeof(mc_uvec2)),
+        "settings option `canvasSize` is required"
+    );
+    ASSERT(
+        settings.frame_cb_fn != NULL,
+        "settings option `frame_cb_fn` is required"
+    );
+
     mc_Result res;
 
-    state.windowSize = windowSize;
-    state.buffSize = bufferSize;
+    state.windowSize = settings.windowSize;
+    state.canvas.size = settings.canvasSize;
 
     glfwInit();
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    state.window
-        = glfwCreateWindow(windowSize.x, windowSize.y, windowTitle, NULL, NULL);
+    state.window = glfwCreateWindow(
+        state.windowSize.x,
+        state.windowSize.y,
+        settings.windowTitle,
+        NULL,
+        NULL
+    );
     glfwMakeContextCurrent(state.window);
     glewInit();
     glfwSwapInterval(0);
@@ -127,78 +128,62 @@ mc_Result mf_initialize(
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
-    state.buff = mc_buffer_create(
-        state.buffSize.x * state.buffSize.y * sizeof(mc_vec4)
+    state.canvas.buff = mc_buffer_create(
+        state.canvas.size.x * state.canvas.size.y * sizeof(mc_vec4)
     );
-    ASSERT(state.buff != NULL, "failed to create pixel buff");
+    ASSERT(state.canvas.buff != NULL, "failed to create canvas");
 
-    state.buffClearProg = mc_program_create_from_string(clearCode, 0, NULL);
-    ASSERT(state.buffClearProg != NULL, "failed to create clear program");
+    res = GL_CHECK_ERROR();
+    if (!res.ok) {
+        glfwTerminate();
+        return res;
+    }
 
-    state.prevTime = glfwGetTime();
-    return GL_CHECK_ERROR();
-}
+    double prevTime = glfwGetTime();
 
-mc_Result mf_terminate() {
+    if (settings.start_cb_fn != NULL
+        && !settings.start_cb_fn(state.canvas, settings.callbackArg)) {
+        glfwTerminate();
+        return ERROR("`start_cb_fn` returned MC_FALSE");
+    }
+
+    while (!glfwWindowShouldClose(state.window)) {
+        double currTime = glfwGetTime();
+        double dt = currTime - prevTime;
+        prevTime = currTime;
+
+        if (!settings.frame_cb_fn(state.canvas, dt, settings.callbackArg)) {
+            break;
+        }
+
+        glClear(GL_COLOR_BUFFER_BIT);
+        glUseProgram(state.renderProg);
+
+        glUniform2ui(
+            glGetUniformLocation(state.renderProg, "winSize"),
+            state.windowSize.x,
+            state.windowSize.y
+        );
+
+        glUniform2ui(
+            glGetUniformLocation(state.renderProg, "cvSize"),
+            state.canvas.size.x,
+            state.canvas.size.y
+        );
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, *(GLuint*)(state.canvas.buff));
+        glBindVertexArray(state.vao);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glfwSwapBuffers(state.window);
+        glfwPollEvents();
+    }
+
+    if (settings.stop_cb_fn != NULL
+        && !settings.stop_cb_fn(state.canvas, settings.callbackArg)) {
+        glfwTerminate();
+        return ERROR("`stop_cb_fn` returned MC_FALSE");
+    }
+
     glfwTerminate();
-    return GL_CHECK_ERROR();
-}
-
-mc_Bool mf_window_should_close() {
-    return glfwWindowShouldClose(state.window) ? MC_TRUE : MC_FALSE;
-}
-
-mc_Result mf_step() {
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glUseProgram(state.renderProg);
-
-    glUniform2ui(
-        glGetUniformLocation(state.renderProg, "windowSize"),
-        state.windowSize.x,
-        state.windowSize.y
-    );
-
-    glUniform2ui(
-        glGetUniformLocation(state.renderProg, "buffSize"),
-        state.buffSize.x,
-        state.buffSize.y
-    );
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *(GLuint*)(state.buff));
-    glBindVertexArray(state.vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-    glfwSwapBuffers(state.window);
-    glfwPollEvents();
-
-    double currTime = glfwGetTime();
-    state.dt = currTime - state.prevTime;
-    state.prevTime = currTime;
-
-    return GL_CHECK_ERROR();
-}
-
-mc_Result mf_clear_buffer(mc_vec4 color) {
-    mc_program_set_vec4(state.buffClearProg, "clearColor", color);
-    mc_program_dispatch(
-        state.buffClearProg,
-        (mc_ivec3){state.buffSize.x, state.buffSize.y, 1},
-        1,
-        (mc_Buffer*[]){state.buff}
-    );
-
-    return GL_CHECK_ERROR();
-}
-
-mc_Buffer* mf_get_buffer_ref() {
-    return state.buff;
-}
-
-mc_uvec2 mf_get_buffer_size() {
-    return state.buffSize;
-}
-
-float mf_get_dt() {
-    return state.dt;
+    return OK;
 }
