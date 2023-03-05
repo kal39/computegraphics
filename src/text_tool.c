@@ -2,7 +2,7 @@
 
 static char* code = //
     "#version 430\n"
-    "layout(local_size_x = 1, local_size_y = 1) in;\n"
+    "layout(local_size_x = 6, local_size_y = 10) in;\n"
     "layout(std430, binding = 0) buffer ssbo0 {\n"
     "	vec4 cv[];\n"
     "};\n"
@@ -178,7 +178,7 @@ mc_Result mcv_text_tool_draw(
 
         mc_program_dispatch(
             textTool->program,
-            (mc_ivec3){6 * textTool->scale, 10 * textTool->scale, 1},
+            (mc_ivec3){textTool->scale, textTool->scale, 1},
             2,
             (mc_Buffer*[]){canvas.buff, textTool->fontData}
         );
