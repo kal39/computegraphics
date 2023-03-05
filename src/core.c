@@ -13,6 +13,8 @@ struct mcv_State {
     mcv_start_stop_cb* stop_cb;
     mcv_key_cb* key_down_cb;
     mcv_key_cb* key_up_cb;
+    mcv_mouse_cb* mouse_move_cb;
+    mcv_mouse_cb* mouse_scroll_cb;
 };
 
 static struct mcv_State state;
@@ -68,7 +70,13 @@ static mc_Result check_program(GLuint program, uint32_t maxLen, char* err) {
     return ERROR("program link error");
 }
 
-void key_cb(GLFWwindow* window, int key, int scancode, int action, int mods) {
+static void key_cb(
+    GLFWwindow* window,
+    int key,
+    int scancode,
+    int action,
+    int mods
+) {
     switch (action) {
         case GLFW_PRESS:
             if (state.key_down_cb != NULL) state.key_down_cb(key, state.arg);
@@ -78,6 +86,29 @@ void key_cb(GLFWwindow* window, int key, int scancode, int action, int mods) {
             break;
         default: break;
     }
+}
+
+static void mouse_btn_cb(GLFWwindow* window, int btn, int action, int mods) {
+    btn += 400;
+    switch (action) {
+        case GLFW_PRESS:
+            if (state.key_down_cb != NULL) state.key_down_cb(btn, state.arg);
+            break;
+        case GLFW_RELEASE:
+            if (state.key_up_cb != NULL) state.key_up_cb(btn, state.arg);
+            break;
+        default: break;
+    }
+}
+
+static void mouse_mv_cb(GLFWwindow* window, double x, double y) {
+    if (state.mouse_move_cb != NULL)
+        state.mouse_move_cb((mc_vec2){x, y}, state.arg);
+}
+
+static void mouse_sc_cb(GLFWwindow* window, double x, double y) {
+    if (state.mouse_scroll_cb != NULL)
+        state.mouse_scroll_cb((mc_vec2){x, y}, state.arg);
 }
 
 static mc_Result main_loop() {
@@ -152,6 +183,8 @@ mc_Result mcv_start(mcv_Settings settings) {
     state.stop_cb = settings.stop_cb;
     state.key_down_cb = settings.key_down_cb;
     state.key_up_cb = settings.key_up_cb;
+    state.mouse_move_cb = settings.mouse_move_cb;
+    state.mouse_scroll_cb = settings.mouse_scroll_cb;
 
     glfwInit();
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -165,6 +198,9 @@ mc_Result mcv_start(mcv_Settings settings) {
     glfwMakeContextCurrent(state.window);
     glfwSwapInterval(0);
     glfwSetKeyCallback(state.window, key_cb);
+    glfwSetMouseButtonCallback(state.window, mouse_btn_cb);
+    glfwSetCursorPosCallback(state.window, mouse_mv_cb);
+    glfwSetScrollCallback(state.window, mouse_sc_cb);
 
     glewInit();
 

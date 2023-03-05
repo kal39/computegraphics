@@ -124,6 +124,14 @@ typedef enum mcv_Key {
     MCV_KEY_RIGHT_ALT = 346,
     MCV_KEY_RIGHT_SUPER = 347,
     MCV_KEY_MENU = 348,
+    MCV_KEY_MOUSE_1 = 400,
+    MCV_KEY_MOUSE_2 = 401,
+    MCV_KEY_MOUSE_3 = 402,
+    MCV_KEY_MOUSE_4 = 403,
+    MCV_KEY_MOUSE_5 = 404,
+    MCV_KEY_MOUSE_6 = 405,
+    MCV_KEY_MOUSE_7 = 406,
+    MCV_KEY_MOUSE_8 = 407,
 } mcv_Key;
 
 typedef struct mcv_Canvas {
@@ -137,6 +145,8 @@ typedef mc_Bool(mcv_frame_cb)(mcv_Canvas canvas, float dt, void* arg);
 
 typedef void(mcv_key_cb)(mcv_Key key, void* arg);
 
+typedef void(mcv_mouse_cb)(mc_vec2 pos, void* arg);
+
 typedef struct mcv_Settings {
     const char* windowTitle;
     mc_uvec2 windowSize;
@@ -147,6 +157,8 @@ typedef struct mcv_Settings {
     mcv_start_stop_cb* stop_cb;
     mcv_key_cb* key_down_cb;
     mcv_key_cb* key_up_cb;
+    mcv_mouse_cb* mouse_move_cb;
+    mcv_mouse_cb* mouse_scroll_cb;
 } mcv_Settings;
 
 typedef struct mcv_clearTool mcv_clearTool;
