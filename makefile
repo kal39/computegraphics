@@ -5,7 +5,7 @@
 #---- BASIC -----------------------------------------------------------------------------------------------------------#
 
 LIBRARY        := microcanvas
-LIBS           := -lmicrocanvas -lmicrocompute -lgbm -lEGL -lGL -lGLEW -lglfw
+LIBS           := -lmicrocanvas -lmicrocompute -lgbm -lEGL -lGL -lGLEW -lglfw -lm
 FLAGS          := -Wall -Wextra -Wno-missing-braces -Wno-unused-parameter
 DEFS           := 
 

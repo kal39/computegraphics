@@ -6,6 +6,13 @@ struct mcv_State {
     mcv_Canvas canvas;
     GLuint renderProg;
     GLuint vao;
+
+    void* arg;
+    mcv_start_stop_cb* start_cb;
+    mcv_frame_cb* frame_cb;
+    mcv_start_stop_cb* stop_cb;
+    mcv_key_cb* key_down_cb;
+    mcv_key_cb* key_up_cb;
 };
 
 static struct mcv_State state;
@@ -61,21 +68,31 @@ static mc_Result check_program(GLuint program, uint32_t maxLen, char* err) {
     return ERROR("program link error");
 }
 
-static mc_Result main_loop(
-    mcv_start_stop_cb start_cb,
-    mcv_frame_cb frame_cb,
-    mcv_start_stop_cb stop_cb,
-    void* arg
-) {
+void key_cb(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    switch (action) {
+        case GLFW_PRESS:
+            if (state.key_down_cb != NULL) state.key_down_cb(key, state.arg);
+            break;
+        case GLFW_RELEASE:
+            if (state.key_up_cb != NULL) state.key_up_cb(key, state.arg);
+            break;
+        default: break;
+    }
+}
+
+static mc_Result main_loop() {
     double prevTime = glfwGetTime();
-    ASSERT(start_cb == NULL || start_cb(state.canvas, arg), "start_cb failed");
+    ASSERT(
+        state.start_cb == NULL || state.start_cb(state.canvas, state.arg),
+        "start_cb failed"
+    );
 
     while (!glfwWindowShouldClose(state.window)) {
         double currTime = glfwGetTime();
         double dt = currTime - prevTime;
         prevTime = currTime;
 
-        if (!frame_cb(state.canvas, dt, arg)) break;
+        if (!state.frame_cb(state.canvas, dt, state.arg)) break;
 
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(state.renderProg);
@@ -99,7 +116,11 @@ static mc_Result main_loop(
         glfwPollEvents();
     }
 
-    ASSERT(stop_cb == NULL || stop_cb(state.canvas, arg), "stop_cb failed");
+    ASSERT(
+        state.stop_cb == NULL || state.stop_cb(state.canvas, state.arg),
+        "stop_cb failed"
+    );
+
     return OK;
 }
 
@@ -125,6 +146,12 @@ mc_Result mcv_start(mcv_Settings settings) {
 
     state.windowSize = settings.windowSize;
     state.canvas.size = settings.canvasSize;
+    state.arg = settings.callbackArg;
+    state.start_cb = settings.start_cb;
+    state.frame_cb = settings.frame_cb;
+    state.stop_cb = settings.stop_cb;
+    state.key_down_cb = settings.key_down_cb;
+    state.key_up_cb = settings.key_up_cb;
 
     glfwInit();
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -137,6 +164,7 @@ mc_Result mcv_start(mcv_Settings settings) {
     );
     glfwMakeContextCurrent(state.window);
     glfwSwapInterval(0);
+    glfwSetKeyCallback(state.window, key_cb);
 
     glewInit();
 
@@ -183,12 +211,7 @@ mc_Result mcv_start(mcv_Settings settings) {
         return res;
     }
 
-    res = main_loop(
-        settings.start_cb,
-        settings.frame_cb,
-        settings.stop_cb,
-        settings.callbackArg
-    );
+    res = main_loop();
 
     glfwTerminate();
     return res;
