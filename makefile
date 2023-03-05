@@ -5,7 +5,7 @@
 #---- BASIC -----------------------------------------------------------------------------------------------------------#
 
 LIBRARY        := microcanvas
-LIBS           := -lmicrocanvas -lmicrocompute -lgbm -lEGL -lGL -lGLEW -lglfw -lm
+LIBS           := -lmicrocanvas -lmicrocompute -lGL -lGLEW -lglfw -lm
 FLAGS          := -Wall -Wextra -Wno-missing-braces -Wno-unused-parameter
 DEFS           := 
 
@@ -34,11 +34,13 @@ EXAMPLE_C_FILES   := $(shell find $(EXAMPLE_FOLDER)/ -type f -name "*.c")
 EXAMPLES          := $(subst $(EXAMPLE_FOLDER)/,$(OUT_FOLDER)/,$(subst .c,,$(EXAMPLE_C_FILES)))
 STATIC_LIB        := $(LIB_FOLDER)/lib$(LIBRARY).a
 
-.PHONY: all library example dependency doc clean
+.PHONY: default all library example dependency doc clean
+
+default: library doc
 
 all: library example doc
 
-library: $(STATIC_LIB)
+library: clean $(STATIC_LIB)
 
 example: $(EXAMPLES)
 
@@ -52,9 +54,6 @@ dependency: $(INCLUDE_FOLDER) $(LIB_FOLDER)
 doc:
 	python3 submodules/microdoc/doc_generator.py $(SRC_FOLDER)/$(LIBRARY).h doc.md
 
-$(BUILD_FOLDER):
-	$(MKDIR) $(BUILD_FOLDER)
-
 $(OUT_FOLDER):
 	$(MKDIR) $(OUT_FOLDER)
 
@@ -64,7 +63,7 @@ $(INCLUDE_FOLDER):
 $(LIB_FOLDER):
 	$(MKDIR) $(LIB_FOLDER)
 
-$(BUILD_SUB_FOLDERS): $(BUILD_FOLDER)
+$(BUILD_SUB_FOLDERS):
 	$(MKDIR) $(BUILD_SUB_FOLDERS)
 
 $(C_OBJECTS): $(BUILD_SUB_FOLDERS) $(C_FILES)
