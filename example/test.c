@@ -1,4 +1,4 @@
-#include <microfb.h>
+#include <microcanvas.h>
 #include <stdio.h>
 
 static char* renderProgSrc = //
@@ -29,10 +29,10 @@ static char* renderProgSrc = //
 
 typedef struct State {
     mc_Program* renderProg;
-    mf_canvasClearTool* clearTool;
+    mcv_canvasClearTool* clearTool;
 } State;
 
-mc_Bool start(mf_Canvas canvas, State* state) {
+mc_Bool start(mcv_Canvas canvas, State* state) {
     printf("start\n");
 
     int maxErrLen = 2048;
@@ -45,8 +45,8 @@ mc_Bool start(mf_Canvas canvas, State* state) {
         return MC_FALSE;
     }
 
-    state->clearTool = mf_canvas_clear_tool_create();
-    mf_canvas_clear_tool_set_color(
+    state->clearTool = mcv_canvas_clear_tool_create();
+    mcv_canvas_clear_tool_set_color(
         state->clearTool,
         (mc_vec4){0.5, 0.5, 0.0, 1.0}
     );
@@ -54,7 +54,7 @@ mc_Bool start(mf_Canvas canvas, State* state) {
     return MC_TRUE;
 }
 
-mc_Bool frame(mf_Canvas canvas, float dt, State* state) {
+mc_Bool frame(mcv_Canvas canvas, float dt, State* state) {
     printf("fps: %f\n", 1.0 / dt);
 
     mc_program_set_float(state->renderProg, "maxIter", 500);
@@ -75,11 +75,11 @@ mc_Bool frame(mf_Canvas canvas, float dt, State* state) {
     return MC_TRUE;
 }
 
-mc_Bool stop(mf_Canvas canvas, State* state) {
+mc_Bool stop(mcv_Canvas canvas, State* state) {
     printf("stop\n");
 
     mc_program_destroy(state->renderProg);
-    mf_canvas_clear_tool_destroy(state->clearTool);
+    mcv_canvas_clear_tool_destroy(state->clearTool);
 
     return MC_TRUE;
 }
@@ -87,17 +87,17 @@ mc_Bool stop(mf_Canvas canvas, State* state) {
 int main(void) {
     State state;
 
-    mf_Settings settings = (mf_Settings){
+    mcv_Settings settings = (mcv_Settings){
         .windowTitle = "Mandelbrot Test",
         .windowSize = (mc_uvec2){1000, 800},
         .canvasSize = (mc_uvec2){800, 600},
         .callbackArg = &state,
-        .start_cb_fn = (mf_start_stop_callback*)start,
-        .frame_cb_fn = (mf_frame_callback*)frame,
-        .stop_cb_fn = (mf_start_stop_callback*)stop,
+        .start_cb_fn = (mcv_start_stop_callback*)start,
+        .frame_cb_fn = (mcv_frame_callback*)frame,
+        .stop_cb_fn = (mcv_start_stop_callback*)stop,
     };
 
-    mc_Result res = mf_start(settings);
+    mc_Result res = mcv_start(settings);
     if (!res.ok) {
         mc_result_pretty_print(res);
         return 1;

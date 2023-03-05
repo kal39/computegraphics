@@ -4,11 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "microfb.h"
+#include "microcanvas.h"
 
-typedef struct mf_canvasClearTool {
+typedef struct mcv_canvasClearTool {
     mc_Program* program;
-} mf_canvasClearTool;
+} mcv_canvasClearTool;
 
 mc_Result gl_check_error(uint32_t line, const char* file, const char* func);
 

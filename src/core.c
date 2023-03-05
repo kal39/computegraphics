@@ -1,14 +1,14 @@
-#include "_microfb.h"
+#include "_microcanvas.h"
 
-struct mf_State {
+struct mcv_State {
     mc_uvec2 windowSize;
     GLFWwindow* window;
-    mf_Canvas canvas;
+    mcv_Canvas canvas;
     GLuint renderProg;
     GLuint vao;
 };
 
-static struct mf_State state;
+static struct mcv_State state;
 
 static char* vertCode = //
     "#version 430\n"
@@ -60,7 +60,7 @@ static mc_Result check_program(GLuint program, uint32_t maxLen, char* err) {
     return ERROR("program link error");
 }
 
-mc_Result mf_start(mf_Settings settings) {
+mc_Result mcv_start(mcv_Settings settings) {
     ASSERT(
         settings.windowTitle != NULL,
         "settings option `windowTitle` is required"
