@@ -21,4 +21,4 @@ for i in range(image_size_chars[1]):
 
         # char = chr((i * image_size_chars[0] + j) + 32)
         # print("0x{:08X}, 0x{:08X}, // '{:}'".format(num1, num2, char))
-        print("0x{:08X}{:08X}, ".format(num1, num2))
+        print("0x{:08X}, 0x{:08X}, ".format(num1, num2))

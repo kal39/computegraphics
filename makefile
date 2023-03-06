@@ -26,8 +26,8 @@ LIBS           := -lmicrocanvas -lmicrocompute -lGL -lglfw -lm
 else ifeq ($(strip $(TARGET)),windows)
 LIBS           := -lmicrocanvas -lmicrocompute -lopengl32 -lglfw3 -lgdi32 -lm
 endif
-FLAGS          := -Wall -Wextra -Wno-missing-braces -Wno-unused-parameter
-DEFS           := 
+FLAGS          := -std=c11 -Wall -Wextra -Wshadow -Wpointer-arith -Wcast-qual -Wno-unused-parameter -O3
+DEFS           := $(CFLAGS)
 
 #---- PROJECT STRUCTURE -----------------------------------------------------------------------------------------------#
 

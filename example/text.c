@@ -1,7 +1,7 @@
 #include <microcanvas.h>
 #include <stdio.h>
 
-const char* text1 = //
+static char* text1 = //
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod\n"
     "tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim\n"
     "veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea\n"
@@ -45,17 +45,9 @@ mc_Bool start(mcv_Canvas cv, State* s) {
 
 mc_Bool frame(mcv_Canvas cv, float dt, State* s) {
     mcv_clear_tool_clear(s->clearTool, cv);
-    mvc_text_tool_printf(
-        s->textTool,
-        cv,
-        (mc_uvec2){20, 20},
-        "%d fps",
-        (int)(1.0 / dt)
-    );
-
+    mvc_text_tool_printf(s->textTool, cv, (mc_uvec2){20, 20}, "%f fps", 1 / dt);
     mvc_text_tool_printf(s->textTool, cv, (mc_uvec2){20, 50}, "%s", text1);
     mvc_text_tool_printf(s->textTool, cv, (mc_uvec2){20, 250}, "%s", text2);
-
     return MC_TRUE;
 }
 

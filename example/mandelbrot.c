@@ -133,7 +133,4 @@ int main(void) {
         .key_up_cb = (mcv_key_cb*)key_up,
     });
     if (!res.ok) mc_result_pretty_print(res);
-
-    printf("Press ENTER to exit");
-    getchar();
 }
