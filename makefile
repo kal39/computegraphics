@@ -58,7 +58,7 @@ EXAMPLE_C_FILES   := $(shell find $(EXAMPLE_FOLDER)/ -type f -name "*.c")
 EXAMPLES          := $(subst $(EXAMPLE_FOLDER)/,$(OUT_FOLDER)/,$(subst .c,,$(EXAMPLE_C_FILES)))
 STATIC_LIB        := $(LIB_FOLDER)/lib$(LIBRARY).a
 
-.PHONY: default all library example dependency doc clean
+.PHONY: default all library examples dependency doc clean
 
 default: library
 
