@@ -1,11 +1,31 @@
 #======================================================================================================================#
+# CHECK
+#======================================================================================================================#
+
+ifneq ($(strip $(TARGET)),linux)
+ifneq ($(strip $(TARGET)),windows)
+$(error set TARGET=linux or TARGET=windows)
+endif
+endif
+
+ifeq ($(strip $(TARGET)),windows)
+ifeq ($(strip $(MINGW)),)
+$(error set MINGW=[[path to mingw root folder]], for example, MINGW="C:\MinGW")
+endif
+endif
+
+#======================================================================================================================#
 # CONFIG
 #======================================================================================================================#
 
 #---- BASIC -----------------------------------------------------------------------------------------------------------#
 
 LIBRARY        := microcanvas
+ifeq ($(strip $(TARGET)),linux)
 LIBS           := -lmicrocanvas -lmicrocompute -lGL -lglfw -lm
+else ifeq ($(strip $(TARGET)),windows)
+LIBS           := -lmicrocanvas -lmicrocompute -lopengl32 -lglfw3 -lgdi32 -lm
+endif
 FLAGS          := -Wall -Wextra -Wno-missing-braces -Wno-unused-parameter
 DEFS           := 
 
@@ -20,7 +40,11 @@ EXAMPLE_FOLDER := example
 
 #======================================================================================================================#
 
+ifeq ($(strip $(TARGET)),linux)
 CC                := gcc $(FLAGS) $(DEFS) -isystem $(INCLUDE_FOLDER) -I $(SRC_FOLDER)
+else ifeq ($(strip $(TARGET)),windows)
+CC                := gcc $(FLAGS) $(DEFS) -isystem $(INCLUDE_FOLDER) -isystem $(MINGW)/include -I $(SRC_FOLDER)
+endif
 AR                := ar rcs
 RM                := rm -rf
 CD                := cd
@@ -36,18 +60,18 @@ STATIC_LIB        := $(LIB_FOLDER)/lib$(LIBRARY).a
 
 .PHONY: default all library example dependency doc clean
 
-default: library doc
+default: library
 
-all: library example doc
+all: library examples doc
 
 library: clean $(STATIC_LIB)
 
-example: $(EXAMPLES)
+examples: $(EXAMPLES)
 
 dependency: $(INCLUDE_FOLDER) $(LIB_FOLDER)
 	$(CD) submodules/microcompute; \
-	make clean; \
-	make library
+	$(MAKE_COMMAND) clean; \
+	$(MAKE_COMMAND) library
 	$(CP) submodules/microcompute/include/microcompute.h $(INCLUDE_FOLDER)/microcompute.h
 	$(CP) submodules/microcompute/lib/libmicrocompute.a $(LIB_FOLDER)/libmicrocompute.a
 
