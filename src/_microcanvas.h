@@ -15,6 +15,7 @@ typedef struct mcv_textTool {
     mc_Program* program;
     uint32_t scale;
     mc_uvec2 spacing;
+    uint32_t tabSize;
 } mcv_textTool;
 
 mc_Result gl_check_error(uint32_t line, const char* file, const char* func);

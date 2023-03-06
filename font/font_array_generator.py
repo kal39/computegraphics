@@ -19,5 +19,6 @@ for i in range(image_size_chars[1]):
                 if ii < 5: num1 = (num1 << 1 | v)
                 else: num2 = (num2 << 1 | v)
 
-        char = chr((i * image_size_chars[0] + j) + 32)
-        print("0x{:08X}, 0x{:08X}, // '{:}'".format(num1, num2, char))
+        # char = chr((i * image_size_chars[0] + j) + 32)
+        # print("0x{:08X}, 0x{:08X}, // '{:}'".format(num1, num2, char))
+        print("0x{:08X}{:08X}, ".format(num1, num2))

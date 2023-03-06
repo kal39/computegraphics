@@ -184,6 +184,8 @@ mc_Result mcv_text_tool_set_spacing(mcv_textTool* textTool, mc_uvec2 spacing);
 
 mc_Result mcv_text_tool_set_color(mcv_textTool* textTool, mc_vec4 color);
 
+mc_Result mcv_text_tool_set_tab_size(mcv_textTool* textTool, uint32_t size);
+
 mc_Result mvc_text_tool_printf(
     mcv_textTool* textTool,
     mcv_Canvas canvas,
