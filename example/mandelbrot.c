@@ -6,7 +6,7 @@
 #define ZOOM_SPEED 2
 
 static char* progSrc = //
-    "#version 460\n"
+    "#version 430\n"
     "layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;\n"
     "layout(std430, binding = 0) buffer ssbo0 {\n"
     "    vec3 floatData[];\n"
@@ -133,4 +133,7 @@ int main(void) {
         .key_up_cb = (mcv_key_cb*)key_up,
     });
     if (!res.ok) mc_result_pretty_print(res);
+
+    printf("Press ENTER to exit");
+    getchar();
 }
