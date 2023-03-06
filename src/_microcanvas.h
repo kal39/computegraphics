@@ -13,7 +13,6 @@ typedef struct mcv_clearTool {
 
 typedef struct mcv_textTool {
     mc_Program* program;
-    mc_Buffer* fontData;
     uint32_t scale;
     mc_uvec2 spacing;
 } mcv_textTool;

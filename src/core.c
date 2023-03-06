@@ -29,7 +29,7 @@ static char* vertCode = //
 static char* fragCode = //
     "#version 430\n"
     "layout (location = 0) out vec4 outColor;"
-    "layout(std430, binding = 0) buffer ssbo0 {\n"
+    "layout(std430, binding = 0) restrict coherent readonly buffer ssbo0 {\n"
     "   vec4 cv[];\n"
     "};\n"
     "uniform uvec2 winSize;\n"
@@ -124,6 +124,8 @@ static mc_Result main_loop() {
         prevTime = currTime;
 
         if (!state.frame_cb(state.canvas, dt, state.arg)) break;
+
+        mc_memory_barrier();
 
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(state.renderProg);

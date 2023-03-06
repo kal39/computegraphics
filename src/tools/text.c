@@ -3,27 +3,21 @@
 static char* code = //
     "#version 430\n"
     "layout(local_size_x = 1, local_size_y = 1) in;\n"
-    "layout(std430, binding = 0) buffer ssbo0 {\n"
+    "layout(std430, binding = 0) restrict coherent writeonly buffer ssbo0 {\n"
     "	vec4 cv[];\n"
     "};\n"
-    "layout(std430, binding = 1) buffer ssbo1 {\n"
-    "	int font[];\n"
-    "};\n"
+    "uniform ivec2 charData;\n"
     "uniform uvec2 cvSize;\n"
-    "uniform uint charID;\n"
     "uniform uvec2 charPos;\n"
     "uniform vec4 charColor;\n"
     "uniform uint charScale;\n"
     "void main() {\n"
     "   uvec2 fPos = gl_GlobalInvocationID.xy / charScale;"
     "	uvec2 pPos = gl_GlobalInvocationID.xy + charPos;\n"
-    "   if(pPos.x<0 || pPos.x>=cvSize.x || pPos.y<0 || pPos.y>=cvSize.y)\n"
-    "       return;\n"
     "   int draw = fPos.y < 5\n"
-    "       ? (font[charID * 2] >> (29 - fPos.y * 6 - fPos.x)) & 1\n"
-    "       : font[charID * 2 + 1] >> (29 - (fPos.y - 5) * 6 - fPos.x) & 1;\n"
-    "	if(bool(draw))\n"
-    "		cv[pPos.y * cvSize.x + pPos.x] = charColor;\n"
+    "       ? (charData.x >> (29 - fPos.y * 6 - fPos.x)) & 1\n"
+    "       : charData.y >> (29 - (fPos.y - 5) * 6 - fPos.x) & 1;\n"
+    "	if(bool(draw)) cv[pPos.y * cvSize.x + pPos.x] = charColor;\n"
     "}\n";
 
 static int32_t fontBytes[] = { //
@@ -63,14 +57,15 @@ static int32_t fontBytes[] = { //
 mcv_textTool* mcv_text_tool_create() {
     mcv_textTool* textTool = malloc(sizeof(*textTool));
 
-    textTool->program = mc_program_from_string(code, 0, NULL);
+    uint32_t maxErrLen = 1024;
+    char err[maxErrLen];
+
+    textTool->program = mc_program_from_string(code, maxErrLen, err);
     if (textTool->program == NULL) {
+        printf("%s\n", err);
         free(textTool);
         return NULL;
     }
-
-    textTool->fontData = mc_buffer_create(sizeof(fontBytes));
-    mc_buffer_write(textTool->fontData, 0, sizeof(fontBytes), fontBytes);
 
     mcv_text_tool_set_scale(textTool, 3);
     mcv_text_tool_set_spacing(textTool, (mc_uvec2){1, 1});
@@ -81,13 +76,13 @@ mcv_textTool* mcv_text_tool_create() {
 mc_Result mcv_text_tool_destroy(mcv_textTool* textTool) {
     ASSERT(textTool != NULL, "textTool is NULL");
     mc_program_destroy(textTool->program);
-    mc_buffer_destroy(textTool->fontData);
     free(textTool);
     return OK;
 }
 
 mc_Result mcv_text_tool_set_scale(mcv_textTool* textTool, uint32_t scale) {
     textTool->scale = scale;
+    mc_program_set_uint(textTool->program, "charScale", textTool->scale);
     return OK;
 }
 
@@ -117,7 +112,6 @@ mc_Result mvc_text_tool_printf(
     vsnprintf(text, len, format, args);
     va_end(args);
 
-    mc_program_set_uint(textTool->program, "charScale", textTool->scale);
     mc_program_set_uvec2(textTool->program, "cvSize", canvas.size);
 
     mc_uvec2 off = (mc_uvec2){0, 0};
@@ -128,7 +122,11 @@ mc_Result mvc_text_tool_printf(
         }
 
         ASSERT(32 <= text[i], "invalid character");
-        mc_program_set_uint(textTool->program, "charID", text[i] - 32);
+        mc_program_set_ivec2(
+            textTool->program,
+            "charData",
+            *(mc_ivec2*)&fontBytes[2 * (text[i] - 32)]
+        );
 
         mc_program_set_uvec2(
             textTool->program,
@@ -141,12 +139,14 @@ mc_Result mvc_text_tool_printf(
         mc_program_dispatch(
             textTool->program,
             (mc_ivec3){6 * textTool->scale, 10 * textTool->scale, 1},
-            2,
-            (mc_Buffer*[]){canvas.buff, textTool->fontData}
+            1,
+            (mc_Buffer*[]){canvas.buff}
         );
 
         off.x++;
     }
+
+    mc_memory_barrier();
 
     return OK;
 }

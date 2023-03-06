@@ -4,7 +4,7 @@ static char* code = //
     "#version 430\n"
     "layout(local_size_x = 1, local_size_y = 1) in;\n"
     "uniform vec4 clearColor;\n"
-    "layout(std430, binding = 0) buffer ssbo0 {\n"
+    "layout(std430, binding = 0) restrict coherent writeonly buffer ssbo0 {\n"
     "    vec4 cv[];\n"
     "};\n"
     "void main() {\n"
@@ -32,12 +32,15 @@ mc_Result mcv_clear_tool_set_color(mcv_clearTool* clearTool, mc_vec4 color) {
 }
 
 mc_Result mcv_clear_tool_clear(mcv_clearTool* clearTool, mcv_Canvas canvas) {
-    return mc_program_dispatch(
+    mc_Result res = mc_program_dispatch(
         clearTool->program,
         (mc_ivec3){canvas.size.x, canvas.size.y, 1},
         1,
         (mc_Buffer*[]){canvas.buff}
     );
+
+    mc_memory_barrier();
+    return res;
 }
 
 mc_Result mcv_clear_tool_destroy(mcv_clearTool* clearTool) {
