@@ -6,11 +6,6 @@
    1. Download [here](https://sourceforge.net/projects/mingw-w64/files/). Choose the `x86_64-posix-sjlj` configuration.
    2. Unzip and copy `mingw64\*` into `[mingw_root_path]\*`.
    3. Add `C:\[mingw_root_path]\bin` to PATH.
-2. Install GLEW
-   1. Download [here](https://glew.sourceforge.net/index.html).
-   2. Copy `include\*` to `C:\[mingw_root_path]\include\`.
-   3. Copy `lib\Release\x64\*` to `C:\[mingw_root_path]\lib\`.
-   4. Copy `bin\Release\x64\*` to `C:\Windows\System32\`.
 3. Install GLFW
    1. Download [here](https://www.glfw.org/download).
    2. Copy `include\*` to `C:\[mingw_root_path]\include\`.
