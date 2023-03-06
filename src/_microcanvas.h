@@ -1,9 +1,10 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "glad/glad.h"
+#include <GLFW/glfw3.h>
 
 #include "microcanvas.h"
 

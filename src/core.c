@@ -204,7 +204,7 @@ mc_Result mcv_start(mcv_Settings settings) {
     glfwSetCursorPosCallback(state.window, mouse_mv_cb);
     glfwSetScrollCallback(state.window, mouse_sc_cb);
 
-    glewInit();
+    gladLoadGL();
 
     GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertShader, 1, (const char* const*)&vertCode, NULL);
