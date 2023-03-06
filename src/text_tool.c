@@ -136,9 +136,17 @@ mcv_textTool* mcv_text_tool_create() {
     mc_buffer_write(textTool->fontData, 0, sizeof(fontBytes), fontBytes);
 
     mcv_text_tool_set_scale(textTool, 3);
-    mcv_text_tool_set_spacing(textTool, 1);
+    mcv_text_tool_set_spacing(textTool, (mc_uvec2){1, 1});
     mcv_text_tool_set_color(textTool, (mc_vec4){0.8, 0.8, 0.8, 1.0});
     return textTool;
+}
+
+mc_Result mcv_text_tool_destroy(mcv_textTool* textTool) {
+    ASSERT(textTool != NULL, "textTool is NULL");
+    mc_program_destroy(textTool->program);
+    mc_buffer_destroy(textTool->fontData);
+    free(textTool);
+    return OK;
 }
 
 mc_Result mcv_text_tool_set_scale(mcv_textTool* textTool, uint32_t scale) {
@@ -146,7 +154,7 @@ mc_Result mcv_text_tool_set_scale(mcv_textTool* textTool, uint32_t scale) {
     return OK;
 }
 
-mc_Result mcv_text_tool_set_spacing(mcv_textTool* textTool, uint32_t spacing) {
+mc_Result mcv_text_tool_set_spacing(mcv_textTool* textTool, mc_uvec2 spacing) {
     textTool->spacing = spacing;
     return OK;
 }
@@ -156,24 +164,41 @@ mc_Result mcv_text_tool_set_color(mcv_textTool* textTool, mc_vec4 textColor) {
     return OK;
 }
 
-mc_Result mcv_text_tool_draw(
+mc_Result mvc_text_tool_printf(
     mcv_textTool* textTool,
     mcv_Canvas canvas,
-    char* text,
-    mc_uvec2 pos
+    mc_uvec2 pos,
+    char* format,
+    ...
 ) {
+    va_list args;
+    va_start(args, format);
+    int len = vsnprintf(NULL, 0, format, args) + 1;
+    va_end(args);
+    char text[len];
+    va_start(args, format);
+    vsnprintf(text, len, format, args);
+    va_end(args);
+
     mc_program_set_uint(textTool->program, "charScale", textTool->scale);
     mc_program_set_uvec2(textTool->program, "cvSize", canvas.size);
 
+    mc_uvec2 off = (mc_uvec2){0, 0};
     for (uint32_t i = 0; i < strlen(text); i++) {
+        if (text[i] == '\n') {
+            off = (mc_uvec2){0, off.y + 1};
+            continue;
+        }
+
         ASSERT(32 <= text[i], "invalid character");
         mc_program_set_uint(textTool->program, "charID", text[i] - 32);
 
         mc_program_set_uvec2(
             textTool->program,
             "charPos",
-            (mc_uvec2
-            ){pos.x + i * (6 * textTool->scale + textTool->spacing), pos.y}
+            (mc_uvec2){
+                pos.x + off.x * (6 * textTool->scale + textTool->spacing.x),
+                pos.y + off.y * (10 * textTool->scale + textTool->spacing.y)}
         );
 
         mc_program_dispatch(
@@ -182,15 +207,9 @@ mc_Result mcv_text_tool_draw(
             2,
             (mc_Buffer*[]){canvas.buff, textTool->fontData}
         );
+
+        off.x++;
     }
 
-    return OK;
-}
-
-mc_Result mcv_text_tool_destroy(mcv_textTool* textTool) {
-    ASSERT(textTool != NULL, "textTool is NULL");
-    mc_program_destroy(textTool->program);
-    mc_buffer_destroy(textTool->fontData);
-    free(textTool);
     return OK;
 }

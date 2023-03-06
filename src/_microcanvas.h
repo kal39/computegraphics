@@ -1,5 +1,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,7 +15,7 @@ typedef struct mcv_textTool {
     mc_Program* program;
     mc_Buffer* fontData;
     uint32_t scale;
-    uint32_t spacing;
+    mc_uvec2 spacing;
 } mcv_textTool;
 
 mc_Result gl_check_error(uint32_t line, const char* file, const char* func);

@@ -168,25 +168,26 @@ mc_Result mcv_start(mcv_Settings settings);
 
 mcv_clearTool* mcv_clear_tool_create();
 
+mc_Result mcv_clear_tool_destroy(mcv_clearTool* clearTool);
+
 mc_Result mcv_clear_tool_set_color(mcv_clearTool* clearTool, mc_vec4 color);
 
 mc_Result mcv_clear_tool_clear(mcv_clearTool* clearTool, mcv_Canvas canvas);
 
-mc_Result mcv_clear_tool_destroy(mcv_clearTool* clearTool);
-
 mcv_textTool* mcv_text_tool_create();
+
+mc_Result mcv_text_tool_destroy(mcv_textTool* textTool);
 
 mc_Result mcv_text_tool_set_scale(mcv_textTool* textTool, uint32_t scale);
 
-mc_Result mcv_text_tool_set_spacing(mcv_textTool* textTool, uint32_t spacing);
+mc_Result mcv_text_tool_set_spacing(mcv_textTool* textTool, mc_uvec2 spacing);
 
 mc_Result mcv_text_tool_set_color(mcv_textTool* textTool, mc_vec4 color);
 
-mc_Result mcv_text_tool_draw(
+mc_Result mvc_text_tool_printf(
     mcv_textTool* textTool,
     mcv_Canvas canvas,
-    char* text,
-    mc_uvec2 pos
+    mc_uvec2 pos,
+    char* format,
+    ...
 );
-
-mc_Result mcv_text_tool_destroy(mcv_textTool* textTool);

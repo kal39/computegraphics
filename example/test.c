@@ -33,100 +33,95 @@ static char* progSrc = //
 
 typedef struct State {
     mc_Program* prog;
-    mcv_clearTool* clearTool;
     mcv_textTool* textTool;
-
     mc_vec2 cameraPos;
     mc_vec2 cameraPosDelta;
     float cameraZoom;
     float cameraZoomDelta;
 } State;
 
-mc_Bool start(mcv_Canvas canvas, State* state) {
+mc_Bool start(mcv_Canvas cv, State* s) {
     int maxErrLen = 2048;
     char error[maxErrLen];
 
-    state->prog = mc_program_from_string(progSrc, maxErrLen, error);
-    if (state->prog == NULL) {
+    s->prog = mc_program_from_string(progSrc, maxErrLen, error);
+    if (s->prog == NULL) {
         printf("error: %s\n", error);
         return MC_FALSE;
     }
 
-    state->clearTool = mcv_clear_tool_create();
-    state->textTool = mcv_text_tool_create();
-    state->cameraPos = (mc_vec2){-0, -0.8};
-    state->cameraPosDelta = (mc_vec2){0, 0};
-    state->cameraZoom = 3;
-    state->cameraZoomDelta = 1;
+    s->textTool = mcv_text_tool_create();
+    s->cameraPos = (mc_vec2){-0, -0.8};
+    s->cameraPosDelta = (mc_vec2){0, 0};
+    s->cameraZoom = 3;
+    s->cameraZoomDelta = 1;
 
     return MC_TRUE;
 }
 
-mc_Bool frame(mcv_Canvas canvas, float dt, State* state) {
-    state->cameraZoom = state->cameraZoom * pow(state->cameraZoomDelta, dt);
-    state->cameraPos = (mc_vec2){
-        state->cameraPos.x + state->cameraPosDelta.x * dt / state->cameraZoom,
-        state->cameraPos.y + state->cameraPosDelta.y * dt / state->cameraZoom,
+mc_Bool frame(mcv_Canvas cv, float dt, State* s) {
+    s->cameraZoom = s->cameraZoom * pow(s->cameraZoomDelta, dt);
+    s->cameraPos = (mc_vec2){
+        s->cameraPos.x + s->cameraPosDelta.x * dt / s->cameraZoom,
+        s->cameraPos.y + s->cameraPosDelta.y * dt / s->cameraZoom,
     };
 
-    mc_program_set_float(state->prog, "maxIter", 500);
-    mc_program_set_vec2(state->prog, "center", state->cameraPos);
-    mc_program_set_float(state->prog, "zoom", state->cameraZoom);
-
+    mc_program_set_float(s->prog, "maxIter", 500);
+    mc_program_set_vec2(s->prog, "center", s->cameraPos);
+    mc_program_set_float(s->prog, "zoom", s->cameraZoom);
     mc_program_dispatch(
-        state->prog,
-        (mc_ivec3){canvas.size.x, canvas.size.y, 1},
+        s->prog,
+        (mc_ivec3){cv.size.x, cv.size.y, 1},
         1,
-        (mc_Buffer*[]){canvas.buff}
+        (mc_Buffer*[]){cv.buff}
     );
 
-    char msg[100];
-
-    sprintf(msg, "fps:  %d", (int)(1.0 / dt));
-    mcv_text_tool_draw(state->textTool, canvas, msg, (mc_uvec2){20, 20});
-
-    sprintf(msg, "pos:  %f + %fi", state->cameraPos.x, state->cameraPos.y);
-    mcv_text_tool_draw(state->textTool, canvas, msg, (mc_uvec2){20, 40});
-
-    sprintf(msg, "zoom: x%f", state->cameraZoom);
-    mcv_text_tool_draw(state->textTool, canvas, msg, (mc_uvec2){20, 60});
+    mvc_text_tool_printf(
+        s->textTool,
+        cv,
+        (mc_uvec2){20, 20},
+        "fps:  %d\npos:  %f + %fi\nzoom: x%f",
+        (int)(1.0 / dt),
+        s->cameraPos.x,
+        s->cameraPos.y,
+        s->cameraZoom
+    );
 
     return MC_TRUE;
 }
 
-mc_Bool stop(mcv_Canvas canvas, State* state) {
-    mc_program_destroy(state->prog);
-    mcv_clear_tool_destroy(state->clearTool);
-    mcv_text_tool_destroy(state->textTool);
+mc_Bool stop(mcv_Canvas cv, State* s) {
+    mc_program_destroy(s->prog);
+    mcv_text_tool_destroy(s->textTool);
     return MC_TRUE;
 }
 
-void key_down(mcv_Key key, State* state) {
+void key_down(mcv_Key key, State* s) {
     switch (key) {
-        case MCV_KEY_UP: state->cameraPosDelta.y -= MOVE_SPEED; break;
-        case MCV_KEY_DOWN: state->cameraPosDelta.y += MOVE_SPEED; break;
-        case MCV_KEY_RIGHT: state->cameraPosDelta.x += MOVE_SPEED; break;
-        case MCV_KEY_LEFT: state->cameraPosDelta.x -= MOVE_SPEED; break;
-        case MCV_KEY_Z: state->cameraZoomDelta *= ZOOM_SPEED; break;
-        case MCV_KEY_X: state->cameraZoomDelta /= ZOOM_SPEED; break;
+        case MCV_KEY_UP: s->cameraPosDelta.y -= MOVE_SPEED; break;
+        case MCV_KEY_DOWN: s->cameraPosDelta.y += MOVE_SPEED; break;
+        case MCV_KEY_RIGHT: s->cameraPosDelta.x += MOVE_SPEED; break;
+        case MCV_KEY_LEFT: s->cameraPosDelta.x -= MOVE_SPEED; break;
+        case MCV_KEY_Z: s->cameraZoomDelta *= ZOOM_SPEED; break;
+        case MCV_KEY_X: s->cameraZoomDelta /= ZOOM_SPEED; break;
         default: break;
     }
 }
 
-void key_up(mcv_Key key, State* state) {
+void key_up(mcv_Key key, State* s) {
     switch (key) {
-        case MCV_KEY_UP: state->cameraPosDelta.y += MOVE_SPEED; break;
-        case MCV_KEY_DOWN: state->cameraPosDelta.y -= MOVE_SPEED; break;
-        case MCV_KEY_RIGHT: state->cameraPosDelta.x -= MOVE_SPEED; break;
-        case MCV_KEY_LEFT: state->cameraPosDelta.x += MOVE_SPEED; break;
-        case MCV_KEY_Z: state->cameraZoomDelta /= ZOOM_SPEED; break;
-        case MCV_KEY_X: state->cameraZoomDelta *= ZOOM_SPEED; break;
+        case MCV_KEY_UP: s->cameraPosDelta.y += MOVE_SPEED; break;
+        case MCV_KEY_DOWN: s->cameraPosDelta.y -= MOVE_SPEED; break;
+        case MCV_KEY_RIGHT: s->cameraPosDelta.x -= MOVE_SPEED; break;
+        case MCV_KEY_LEFT: s->cameraPosDelta.x += MOVE_SPEED; break;
+        case MCV_KEY_Z: s->cameraZoomDelta /= ZOOM_SPEED; break;
+        case MCV_KEY_X: s->cameraZoomDelta *= ZOOM_SPEED; break;
         default: break;
     }
 }
 
 int main(void) {
-    mcv_Settings settings = (mcv_Settings){
+    mc_Result res = mcv_start((mcv_Settings){
         .windowTitle = "Mandelbrot Test",
         .windowSize = (mc_uvec2){1000, 800},
         .canvasSize = (mc_uvec2){1000, 800},
@@ -136,13 +131,6 @@ int main(void) {
         .stop_cb = (mcv_start_stop_cb*)stop,
         .key_down_cb = (mcv_key_cb*)key_down,
         .key_up_cb = (mcv_key_cb*)key_up,
-    };
-
-    mc_Result res = mcv_start(settings);
-    if (!res.ok) {
-        mc_result_pretty_print(res);
-        return 1;
-    }
-
-    return 0;
+    });
+    if (!res.ok) mc_result_pretty_print(res);
 }
