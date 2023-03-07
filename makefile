@@ -69,14 +69,14 @@ library: clean $(STATIC_LIB)
 examples: $(EXAMPLES)
 
 dependency: $(INCLUDE_FOLDER) $(LIB_FOLDER)
-	$(CD) submodules/microcompute; \
+	$(CD) microcompute; \
 	$(MAKE_COMMAND) clean; \
 	$(MAKE_COMMAND) library
-	$(CP) submodules/microcompute/include/microcompute.h $(INCLUDE_FOLDER)/microcompute.h
-	$(CP) submodules/microcompute/lib/libmicrocompute.a $(LIB_FOLDER)/libmicrocompute.a
+	$(CP) microcompute/include/microcompute.h $(INCLUDE_FOLDER)/microcompute.h
+	$(CP) microcompute/lib/libmicrocompute.a $(LIB_FOLDER)/libmicrocompute.a
 
 doc:
-	python3 submodules/microdoc/doc_generator.py $(SRC_FOLDER)/$(LIBRARY).h doc.md
+	python3 microcompute/microdoc/doc_generator.py $(SRC_FOLDER)/$(LIBRARY).h doc.md
 
 $(OUT_FOLDER):
 	$(MKDIR) $(OUT_FOLDER)
