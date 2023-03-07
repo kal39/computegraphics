@@ -106,7 +106,7 @@ void key_down(mcv_Key key, State* s) {
         case MCV_KEY_LEFT: s->cameraPosDelta.x -= MOVE_SPEED; break;
         case MCV_KEY_Z: s->cameraZoomDelta *= ZOOM_SPEED; break;
         case MCV_KEY_X: s->cameraZoomDelta /= ZOOM_SPEED; break;
-        case MCV_KEY_ESCAPE: s->stop = MC_TRUE;
+        case MCV_KEY_ESCAPE: s->stop = MC_TRUE; break;
         default: break;
     }
 }
