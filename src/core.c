@@ -111,6 +111,11 @@ static void mouse_sc_cb(GLFWwindow* window, double x, double y) {
         state.mouse_scroll_cb((mc_vec2){x, y}, state.arg);
 }
 
+static void window_rs_cb(GLFWwindow* window, int width, int height) {
+    state.windowSize = (mc_uvec2){width, height};
+    glViewport(0, 0, state.windowSize.x, state.windowSize.y);
+}
+
 static mc_Result main_loop() {
     double prevTime = glfwGetTime();
     ASSERT(
@@ -189,7 +194,7 @@ mc_Result mcv_start(mcv_Settings settings) {
     state.mouse_scroll_cb = settings.mouse_scroll_cb;
 
     glfwInit();
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    // glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     state.window = glfwCreateWindow(
         state.windowSize.x,
         state.windowSize.y,
@@ -203,6 +208,7 @@ mc_Result mcv_start(mcv_Settings settings) {
     glfwSetMouseButtonCallback(state.window, mouse_btn_cb);
     glfwSetCursorPosCallback(state.window, mouse_mv_cb);
     glfwSetScrollCallback(state.window, mouse_sc_cb);
+    glfwSetFramebufferSizeCallback(state.window, window_rs_cb);
 
     ASSERT(gladLoadGL() != 0, "failed to load GLAD");
 

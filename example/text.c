@@ -60,7 +60,7 @@ mc_Bool stop(mcv_Canvas cv, State* s) {
 int main(void) {
     mc_Result res = mcv_start((mcv_Settings){
         .windowTitle = "Text Stress Test",
-        .windowSize = (mc_uvec2){1000, 800},
+        .windowSize = (mc_uvec2){800, 600},
         .canvasSize = (mc_uvec2){1000, 800},
         .callbackArg = &(State){},
         .start_cb = (mcv_start_stop_cb*)start,
