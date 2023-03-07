@@ -6,8 +6,8 @@ struct mcv_State {
     mcv_Canvas canvas;
     GLuint renderProg;
     GLuint vao;
-
     void* arg;
+    mcv_window_resize_cb* resize_cb;
     mcv_start_stop_cb* start_cb;
     mcv_frame_cb* frame_cb;
     mcv_start_stop_cb* stop_cb;
@@ -114,6 +114,9 @@ static void mouse_sc_cb(GLFWwindow* window, double x, double y) {
 static void window_rs_cb(GLFWwindow* window, int width, int height) {
     state.windowSize = (mc_uvec2){width, height};
     glViewport(0, 0, state.windowSize.x, state.windowSize.y);
+
+    if (state.resize_cb != NULL)
+        state.resize_cb((mc_uvec2){width, height}, state.arg);
 }
 
 static mc_Result main_loop() {
@@ -194,14 +197,26 @@ mc_Result mcv_start(mcv_Settings settings) {
     state.mouse_scroll_cb = settings.mouse_scroll_cb;
 
     glfwInit();
-    // glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    state.window = glfwCreateWindow(
-        state.windowSize.x,
-        state.windowSize.y,
-        settings.windowTitle,
-        NULL,
-        NULL
-    );
+
+    if (settings.fullScreen) {
+        state.window = glfwCreateWindow(
+            glfwGetVideoMode(glfwGetPrimaryMonitor())->width,
+            glfwGetVideoMode(glfwGetPrimaryMonitor())->height,
+            settings.windowTitle,
+            glfwGetPrimaryMonitor(),
+            NULL
+        );
+    } else {
+        glfwWindowHint(GLFW_RESIZABLE, settings.resizable);
+        state.window = glfwCreateWindow(
+            state.windowSize.x,
+            state.windowSize.y,
+            settings.windowTitle,
+            NULL,
+            NULL
+        );
+    }
+
     glfwMakeContextCurrent(state.window);
     glfwSwapInterval(0);
     glfwSetKeyCallback(state.window, key_cb);

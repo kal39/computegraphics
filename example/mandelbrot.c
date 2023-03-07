@@ -33,6 +33,7 @@ static char* progSrc = //
 
 typedef struct State {
     mc_Program* prog;
+    mc_Bool stop;
     mcv_textTool* textTool;
     mc_vec2 cameraPos;
     mc_vec2 cameraPosDelta;
@@ -51,6 +52,7 @@ mc_Bool start(mcv_Canvas cv, State* s) {
     }
 
     s->textTool = mcv_text_tool_create();
+    s->stop = MC_FALSE;
     s->cameraPos = (mc_vec2){-0, -0.8};
     s->cameraPosDelta = (mc_vec2){0, 0};
     s->cameraZoom = 3;
@@ -87,7 +89,7 @@ mc_Bool frame(mcv_Canvas cv, float dt, State* s) {
         s->cameraZoom
     );
 
-    return MC_TRUE;
+    return !s->stop;
 }
 
 mc_Bool stop(mcv_Canvas cv, State* s) {
@@ -104,6 +106,7 @@ void key_down(mcv_Key key, State* s) {
         case MCV_KEY_LEFT: s->cameraPosDelta.x -= MOVE_SPEED; break;
         case MCV_KEY_Z: s->cameraZoomDelta *= ZOOM_SPEED; break;
         case MCV_KEY_X: s->cameraZoomDelta /= ZOOM_SPEED; break;
+        case MCV_KEY_ESCAPE: s->stop = MC_TRUE;
         default: break;
     }
 }
@@ -122,8 +125,9 @@ void key_up(mcv_Key key, State* s) {
 
 int main(void) {
     mc_Result res = mcv_start((mcv_Settings){
-        .windowTitle = "Mandelbrot Test",
+        .windowTitle = "mcv test",
         .windowSize = (mc_uvec2){1000, 800},
+        .fullScreen = MC_TRUE,
         .canvasSize = (mc_uvec2){1000, 800},
         .callbackArg = &(State){},
         .start_cb = (mcv_start_stop_cb*)start,

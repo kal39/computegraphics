@@ -147,11 +147,16 @@ typedef void(mcv_key_cb)(mcv_Key key, void* arg);
 
 typedef void(mcv_mouse_cb)(mc_vec2 pos, void* arg);
 
+typedef void(mcv_window_resize_cb)(mc_uvec2 size, void* arg);
+
 typedef struct mcv_Settings {
     const char* windowTitle;
     mc_uvec2 windowSize;
+    mc_Bool fullScreen;
+    mc_Bool resizable;
     mc_uvec2 canvasSize;
     void* callbackArg;
+    mcv_window_resize_cb* resize_cb;
     mcv_start_stop_cb* start_cb;
     mcv_frame_cb* frame_cb;
     mcv_start_stop_cb* stop_cb;
