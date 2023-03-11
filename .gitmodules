@@ -1,0 +1,8 @@
+[submodule "deps/glfw"]
+	path = deps/glfw
+	url = https://github.com/glfw/glfw.git
+	branch = 3.3-stable
+[submodule "deps/microcompute"]
+	path = deps/microcompute
+	url = git@github.com:kal39/microcompute.git
+	branch = main
