@@ -6,3 +6,6 @@
 	path = deps/microcompute
 	url = git@github.com:kal39/microcompute.git
 	branch = main
+[submodule "deps/k_tools"]
+	path = deps/k_tools
+	url = git@github.com:kal39/k_tools.git
